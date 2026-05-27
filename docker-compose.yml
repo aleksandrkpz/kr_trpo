@@ -1,0 +1,84 @@
+services:
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:etc/nginx/nginx.conf:ro
+    depends_on:
+      - main
+      - input
+      - stat
+
+  main_db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: main_db
+      POSTGRES_USER: main_user
+      POSTGRES_PASSWORD: '123'
+    volumes:
+      - main_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U main_user -d main_db"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+
+  input_db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: input_db
+      POSTGRES_USER: input_user
+      POSTGRES_PASSWORD: '123'
+    volumes:
+      - input_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U input_user -d input_db"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+
+  stat_db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: stat_db
+      POSTGRES_USER: stat_user
+      POSTGRES_PASSWORD: '123'
+    volumes:
+      - stat_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U stat_user -d stat_db"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+
+  main:
+    build: ./service_main
+    #image
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./service_main:/app
+    working_dir: /app
+
+  input:
+    build: ./service_input
+    #image
+    ports:
+      - "8002:8000"
+    volumes:
+      - ./service_input:/app
+    working_dir: /app
+
+  stat:
+    build: ./service_stat
+    #image
+    ports:
+      - "8003:8000"
+    volumes:
+      - ./service_stat:/app
+    working_dir: /app
+volumes:
+  main_data:
+  input_data:
+  stat_data:
