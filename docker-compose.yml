@@ -4,7 +4,7 @@ services:
     ports:
       - "80:80"
     volumes:
-      - ./nginx/nginx.conf:etc/nginx/nginx.conf:ro
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - main
       - input
@@ -55,8 +55,6 @@ services:
   main:
     build: ./service_main
     #image
-    ports:
-      - "8001:8000"
     volumes:
       - ./service_main:/app
     working_dir: /app
@@ -64,8 +62,6 @@ services:
   input:
     build: ./service_input
     #image
-    ports:
-      - "8002:8000"
     volumes:
       - ./service_input:/app
     working_dir: /app
@@ -73,8 +69,6 @@ services:
   stat:
     build: ./service_stat
     #image
-    ports:
-      - "8003:8000"
     volumes:
       - ./service_stat:/app
     working_dir: /app
@@ -82,3 +76,4 @@ volumes:
   main_data:
   input_data:
   stat_data:
+  nginx:
