@@ -1,29 +1,46 @@
-from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 from .models import Human, Disease
 
-def input_page(request):
-    if request.method == 'GET':
-        # Достаем все объекты болезней
-        disease_objects = Disease.objects.all()
-        # Передаем их в HTML под именем 'all_diseases'
-        return render(request, 'app_input/index.html', {'all_diseases': disease_objects})
+# 1. API: Отдаем список болезней для формы ввода
+def api_get_diseases(request):
+    # Забираем id и названия болезней
+    diseases = list(Disease.objects.values('id', 'disease'))
+    return JsonResponse({'status': 'success', 'diseases': diseases}, json_dumps_params={'ensure_ascii': False})
 
-    elif request.method == 'POST':
+
+# 2. API: Принимаем данные из формы и сохраняем в БД
+@csrf_exempt # Отключаем CSRF для межсервисных запросов, main проверит его сам
+def api_create_human(request):
+    if request.method == 'POST':
         name = request.POST.get('name')
-        birthday = request.POST.get('birthday')  # Забираем 'birthday' из HTML
+        birthday = request.POST.get('birthday')
         gender = request.POST.get('gender')
-        # Забираем массив ID выбранных болезней из HTML (из <select name="disease">)
         selected_diseases = request.POST.getlist('disease') 
 
-        # Создаем человека в базе
         new_human = Human.objects.create(
             name=name,
             birthday=birthday,
             gender=gender
         )
-
-        # Привязываем болезни через ManyToMany-поле 'disease' (как в твоей модели Human)
         new_human.disease.set(selected_diseases)
 
-        return HttpResponse("<h3>Пациент успешно сохранен в базу данных!</h3> <a href='.'>Добавить еще одного</a>")
+        # Вместо HttpResponse с HTML-тегом возвращаем JSON-статус
+        return JsonResponse({'status': 'success', 'message': 'Пациент успешно сохранен в базу данных!'})
+    
+    return JsonResponse({'status': 'error', 'message': 'Только POST запросы'}, status=405)
+
+
+# 3. API: Отдаем данные людей для сервиса статистики 
+def api_get_humans_data(request):
+    humans = Human.objects.prefetch_related('disease').all()
+    output_data = []
+    for human in humans:
+        output_data.append({
+            'id': human.id,
+            'name': human.name,
+            'gender': human.gender,
+            'birthday': human.birthday.strftime('%Y-%m-%d'),
+            'diseases': [d.disease for d in human.disease.all()]
+        })
+    return JsonResponse({'status': 'success', 'data': output_data}, json_dumps_params={'ensure_ascii': False})

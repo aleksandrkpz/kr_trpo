@@ -1,0 +1,54 @@
+<div style="display: flex; justify-content: space-between;">
+
+    <div style="width: 45%; border: 1px solid #ccc; padding: 20px;">
+        <h2>Ввод данных пациента</h2>
+        
+        {% if input_error %}
+            <div style="color: red; background: #fee; padding: 10px;">⚠️ {{ input_error }}</div>
+        {% else %}
+            <form method="POST" action="">
+                {% csrf_token %}
+                <p>ФИО: <input type="text" name="name" required></p>
+                <p>Дата рождения: <input type="date" name="birthday" required></p>
+                <p>Пол: 
+                    <select name="gender">
+                        <option value="M">Мужской</option>
+                        <option value="F">Женский</option>
+                    </select>
+                </p>
+                <p>Заболевания:<br>
+                    <select name="disease" json_dumps_params multiple required>
+                        {% for d in all_diseases %}
+                            <option value="{{ d.id }}">{{ d.disease }}</option>
+                        {% endfor %}
+                    </select>
+                </p>
+                <button type="submit">Сохранить пациента</button>
+            </form>
+        {% endif %}
+    </div>
+
+    <div style="width: 45%; border: 1px solid #ccc; padding: 20px;">
+        <h2>Статистика системы</h2>
+        
+        {% if stat_error %}
+            <div style="color: orange; background: #fff3cd; padding: 10px;">❌ {{ stat_error }}</div>
+        {% elif stats %}
+            <p><strong>Всего пациентов в базе:</strong> {{ stats.total_patients }}</p>
+            <p><strong>Средний возраст:</strong> {{ stats.average_age }} лет</p>
+            <p><strong>Пол:</strong> Мужчин: {{ stats.gender_split.males }}, Женщин: {{ stats.gender_split.females }}</p>
+            
+            <h3>Топ-3 болезней:</h3>
+            <ul>
+                {% for disease, count in stats.top_diseases %}
+                    <li>{{ disease }} — {{ count }} шт.</li>
+                {% empty %}
+                    <li>Данных пока нет</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>Загрузка статистики...</p>
+        {% endif %}
+    </div>
+
+</div>

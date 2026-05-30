@@ -1,6 +1,7 @@
+# Файл: service_stat/app_stat/urls.py
 from django.urls import path
-from .views import output_page
+from . import views
 
 urlpatterns = [
-    path('', output_page, name='output_page'),
+    path('api/get_stats/', views.get_analytics, name='get_analytics'),
 ]
