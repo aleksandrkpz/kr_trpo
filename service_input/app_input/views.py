@@ -1,46 +1,55 @@
+import json 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .models import Human, Disease
 
-# 1. API: Отдаем список болезней для формы ввода
+# API функция для возврата списка болезенй в формате JSON
 def api_get_diseases(request):
-    # Забираем id и названия болезней
     diseases = list(Disease.objects.values('id', 'disease'))
-    return JsonResponse({'status': 'success', 'diseases': diseases}, json_dumps_params={'ensure_ascii': False})
+    return JsonResponse({'status': 'success', 'diseases': diseases}
+                        , json_dumps_params={'ensure_ascii': False})
 
+# Разрешает отправлять POST-запросы без csrf_token
+# В данном проекте нужен для обмена данными между микросервисами
+@csrf_exempt
 
-# 2. API: Принимаем данные из формы и сохраняем в БД
-@csrf_exempt # Отключаем CSRF для межсервисных запросов, main проверит его сам
+# API функция сохранения человека в БД.
 def api_create_human(request):
     if request.method == 'POST':
-        name = request.POST.get('name')
-        birthday = request.POST.get('birthday')
-        gender = request.POST.get('gender')
-        selected_diseases = request.POST.getlist('disease') 
-
+        data = json.loads(request.body) # Берем JSON из сервиса MAIN 
+        #request.body выдает сырой поток байт, json.loads превращает его в словарь
+        name = data.get('name')
+        birthday = data.get('birthday')
+        gender = data.get('gender')
+        city = data.get('city', 'Не указан')  
+        selected_diseases = data.get('disease', [])
         new_human = Human.objects.create(
             name=name,
             birthday=birthday,
-            gender=gender
+            gender=gender,
+            city=city  
         )
         new_human.disease.set(selected_diseases)
 
-        # Вместо HttpResponse с HTML-тегом возвращаем JSON-статус
-        return JsonResponse({'status': 'success', 'message': 'Пациент успешно сохранен в базу данных!'})
-    
-    return JsonResponse({'status': 'error', 'message': 'Только POST запросы'}, status=405)
-
-
-# 3. API: Отдаем данные людей для сервиса статистики 
+    return JsonResponse({'status': 'success', 'message': 'success'})
+              
+# функция сериализации в output_data всех людей из таблицы Human 
 def api_get_humans_data(request):
+    # оптимизация запросов к БД (prefetch_related)
     humans = Human.objects.prefetch_related('disease').all()
     output_data = []
     for human in humans:
+        diseases_names = []
+        # собираем текстовые названия болезней, связанных с текущим пациентом 
+        for d in human.disease.all():
+            diseases_names.append(d.disease)
         output_data.append({
             'id': human.id,
             'name': human.name,
             'gender': human.gender,
             'birthday': human.birthday.strftime('%Y-%m-%d'),
-            'diseases': [d.disease for d in human.disease.all()]
+            'city': human.city, 
+            'diseases': diseases_names
         })
-    return JsonResponse({'status': 'success', 'data': output_data}, json_dumps_params={'ensure_ascii': False})
+    return JsonResponse({'status': 'success', 'data': output_data}, 
+                        json_dumps_params={'ensure_ascii': False})

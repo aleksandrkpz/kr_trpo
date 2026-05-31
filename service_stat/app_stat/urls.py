@@ -1,4 +1,4 @@
-# Файл: service_stat/app_stat/urls.py
+
 from django.urls import path
 from . import views
 

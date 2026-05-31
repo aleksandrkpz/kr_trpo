@@ -1,13 +1,15 @@
+<!-- Делим экран на 2 части-->
 <div style="display: flex; justify-content: space-between;">
-
     <div style="width: 45%; border: 1px solid #ccc; padding: 20px;">
         <h2>Ввод данных пациента</h2>
-        
+        <!--если нам прилетела выводим сообщение об ошибке-->
         {% if input_error %}
-            <div style="color: red; background: #fee; padding: 10px;">⚠️ {{ input_error }}</div>
+            <div style="color: red; background: #fee; padding: 10px;"> {{ input_error }}</div>
+        <!-- иначе через атрибут method="POST" в теге <form>  -->
         {% else %}
             <form method="POST" action="">
                 {% csrf_token %}
+                <!-- поля для ввода-->
                 <p>ФИО: <input type="text" name="name" required></p>
                 <p>Дата рождения: <input type="date" name="birthday" required></p>
                 <p>Пол: 
@@ -16,16 +18,22 @@
                         <option value="F">Женский</option>
                     </select>
                 </p>
+                
+                <p>Город: <input type="text" name="city" required></p>
+                
                 <p>Заболевания:<br>
-                    <select name="disease" json_dumps_params multiple required>
-                        {% for d in all_diseases %}
-                            <option value="{{ d.id }}">{{ d.disease }}</option>
-                        {% endfor %}
-                    </select>
+                {% for d in all_diseases %}
+                    <div style="margin-bottom: 5px;">
+                        <input type="checkbox" name="disease" value="{{ d.id }}" id="disease_{{ d.id }}">
+                        <label for="disease_{{ d.id }}">{{ d.disease }}</label>
+                    </div>
+                {% empty %}
+                    <span style="color: red;">Болезни не пришли из базы данных!</span>
+                {% endfor %}
                 </p>
+                <!--Кнопка сохранения пациента-->
                 <button type="submit">Сохранить пациента</button>
-            </form>
-        {% endif %}
+            </form> {% endif %}
     </div>
 
     <div style="width: 45%; border: 1px solid #ccc; padding: 20px;">
@@ -35,8 +43,19 @@
             <div style="color: orange; background: #fff3cd; padding: 10px;">❌ {{ stat_error }}</div>
         {% elif stats %}
             <p><strong>Всего пациентов в базе:</strong> {{ stats.total_patients }}</p>
+          
             <p><strong>Средний возраст:</strong> {{ stats.average_age }} лет</p>
             <p><strong>Пол:</strong> Мужчин: {{ stats.gender_split.males }}, Женщин: {{ stats.gender_split.females }}</p>
+            
+            <h3>Топ городов по болезням:</h3>
+
+            <ul> 
+                {% for city, count in stats.top_cities %}
+                    <li>{{ city }} - {{ count }} шт. </li>
+                {% empty %}
+                    <li>Данных пока нет</li>
+                {% endfor %}
+            </ul>    
             
             <h3>Топ-3 болезней:</h3>
             <ul>
