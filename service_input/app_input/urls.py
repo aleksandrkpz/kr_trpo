@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views
+from . import views 
 
 #регистрируем функции из views в качестве обработчка HTTP запросов.
 urlpatterns = [

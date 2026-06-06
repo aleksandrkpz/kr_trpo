@@ -1,73 +1,209 @@
-<!-- Делим экран на 2 части-->
-<div style="display: flex; justify-content: space-between;">
-    <div style="width: 45%; border: 1px solid #ccc; padding: 20px;">
-        <h2>Ввод данных пациента</h2>
-        <!--если нам прилетела выводим сообщение об ошибке-->
-        {% if input_error %}
-            <div style="color: red; background: #fee; padding: 10px;"> {{ input_error }}</div>
-        <!-- иначе через атрибут method="POST" в теге <form>  -->
-        {% else %}
-            <form method="POST" action="">
-                {% csrf_token %}
-                <!-- поля для ввода-->
-                <p>ФИО: <input type="text" name="name" required></p>
-                <p>Дата рождения: <input type="date" name="birthday" required></p>
-                <p>Пол: 
-                    <select name="gender">
-                        <option value="M">Мужской</option>
-                        <option value="F">Женский</option>
-                    </select>
-                </p>
-                
-                <p>Город: <input type="text" name="city" required></p>
-                
-                <p>Заболевания:<br>
-                {% for d in all_diseases %}
-                    <div style="margin-bottom: 5px;">
-                        <input type="checkbox" name="disease" value="{{ d.id }}" id="disease_{{ d.id }}">
-                        <label for="disease_{{ d.id }}">{{ d.disease }}</label>
-                    </div>
-                {% empty %}
-                    <span style="color: red;">Болезни не пришли из базы данных!</span>
-                {% endfor %}
-                </p>
-                <!--Кнопка сохранения пациента-->
-                <button type="submit">Сохранить пациента</button>
-            </form> {% endif %}
-    </div>
+<style>
+    /* Глобальные настройки страницы */
+    body { font-family: sans-serif; background-color: #f8fafc; margin: 0; padding: 0; }
+    h2, p { text-align: center; }
+    
+    /* Базовые элементы форм (поля ввода, селекты, кнопки) */
+    input, select, button { padding: 10px; font-size: 16px; border-radius: 6px; border: 1px solid #ccc; }
+    button { cursor: pointer; font-weight: bold; transition: 0.2s; }
+    
+    /* Шапка сайта */
+    .main-header { background: #222; color: #fff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+    .header-title { font-size: 18px; }
+    .role-badge { margin-right: 15px; font-weight: bold; }
+    .role-badge.admin { color: #4caf50; }
+    .role-badge.patient { color: #bbb; }
+    
+    /* Кнопки в шапке */
+    .header-link { text-decoration: none; font-weight: bold; padding: 5px 10px; border-radius: 4px; }
+    .header-link.logout { color: #ffc107; border: 1px solid #ffc107; }
+    .header-link.login { color: #fff; border: 1px solid #fff; background: rgba(255,255,255,0.1); }
 
-    <div style="width: 45%; border: 1px solid #ccc; padding: 20px;">
-        <h2>Статистика системы</h2>
-        
-        {% if stat_error %}
-            <div style="color: orange; background: #fff3cd; padding: 10px;">❌ {{ stat_error }}</div>
-        {% elif stats %}
-            <p><strong>Всего пациентов в базе:</strong> {{ stats.total_patients }}</p>
-          
-            <p><strong>Средний возраст:</strong> {{ stats.average_age }} лет</p>
-            <p><strong>Пол:</strong> Мужчин: {{ stats.gender_split.males }}, Женщин: {{ stats.gender_split.females }}</p>
-            
-            <h3>Топ городов по болезням:</h3>
+    /* Системные уведомления (Алерты) */
+    .alert-container { margin: 20px auto; max-width: 800px; }
+    .alert-item { padding: 15px; border-radius: 5px; margin-bottom: 10px; font-weight: bold; text-align: center; }
+    .alert-item.error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    .alert-item.warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+    .alert-item.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .alert-item.default { background-color: #e2e8f0; color: #4a5568; border: 1px solid #cbd5e0; }
 
-            <ul> 
-                {% for city, count in stats.top_cities %}
-                    <li>{{ city }} - {{ count }} шт. </li>
-                {% empty %}
-                    <li>Данных пока нет</li>
-                {% endfor %}
-            </ul>    
-            
-            <h3>Топ-3 болезней:</h3>
-            <ul>
-                {% for disease, count in stats.top_diseases %}
-                    <li>{{ disease }} — {{ count }} шт.</li>
-                {% empty %}
-                    <li>Данных пока нет</li>
-                {% endfor %}
-            </ul>
+    /* Главные контейнеры экранов */
+    .main-card { max-width: 900px; margin: 30px auto; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); background: #ffffff; }
+    .main-card.terminal { border: 4px solid #00420e; }
+    .main-card.dashboard { border: 4px solid #1e3a8a; }
+    
+    /* Специфика экрана Пациента (Инфомат) */
+    .terminal-title { color: #00420e; font-size: 28px; margin-top: 0; }
+    .terminal-desc { color: #555; font-size: 16px; }
+    .divider { border: 0; border-top: 1px solid #eee; margin: 20px 0; }
+    .error-box { color: red; background: #fee; padding: 15px; text-align: center; border-radius: 6px; font-weight: bold; }
+    .input-fixed { width: 250px; }
+    
+    /* Зона выбора симптомов */
+    .symptoms-container { background: #f1f5f9; padding: 20px; border-radius: 8px; margin: 20px 0; }
+    .symptoms-title { margin-top: 0; }
+    .symptoms-grid { text-align: center; line-height: 2.5; }
+    .disease-badge { margin-right: 15px; display: inline-block; background: #fff; padding: 5px 12px; border-radius: 20px; border: 1px solid #cbd5e1; cursor: pointer; }
+    .tech-error-text { color: #dc2626; font-weight: bold; }
+    .btn-submit-terminal { background: #00420e; color: white; padding: 12px 30px; font-size: 18px; border: none; width: 100%; max-width: 300px; margin-bottom: 0; }
+
+    /* Специфика экрана Врача (Дашборд) */
+    .dashboard-title { color: #1e3a8a; font-size: 28px; margin-top: 0; }
+    .dashboard-desc { color: #555; font-size: 16px; }
+    .stat-microservice-error { color: #b91c1c; background: #fef2f2; padding: 20px; border-radius: 6px; border: 1px solid #fca5a5; text-align: center; font-weight: bold; }
+    .stat-error-sub { font-weight: normal; font-size: 14px; color: #7f1d1d; }
+    
+    /* Сетка верхних метрик-карточек */
+    .stats-grid { display: flex; justify-content: space-around; gap: 15px; margin-bottom: 30px; }
+    .stat-card { padding: 15px; border-radius: 8px; width: 30%; text-align: center; }
+    .stat-card.blue { background: #eff6ff; border: 1px solid #bfdbfe; }
+    .stat-card.green { background: #f0fdf4; border: 1px solid #bbf7d0; }
+    .stat-card.gray { background: #fafafa; border: 1px solid #e5e7eb; }
+    
+    .stat-label { font-size: 14px; font-weight: bold; text-transform: uppercase; }
+    .stat-label.blue { color: #1e40af; }
+    .stat-label.green { color: #166534; }
+    .stat-label.gray { color: #4b5563; }
+    
+    .stat-value { margin: 10px 0 0 0; color: #1e3a8a; }
+    .stat-value.large-blue { font-size: 24px; color: #1e3a8a; }
+    .stat-value.large-green { font-size: 24px; color: #14532d; }
+    .stat-value.medium-gray { font-size: 16px; color: #1f2937; }
+
+    /* Нижние списки ТОП-данных */
+    .columns-grid { display: flex; justify-content: space-between; gap: 20px; }
+    .column-card { width: 50%; background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; }
+    .column-title { margin-top: 0; color: #334155; border-bottom: 2px solid #cbd5e1; padding-bottom: 5px; }
+    .info-list { padding-left: 20px; line-height: 1.8; }
+</style>
+
+
+<header class="main-header">
+    <div><strong class="header-title">🏥 Единая Медицинская Система</strong></div>
+    <div>
+        {% if role == 'admin' %}
+            <span class="role-badge admin">● АРМ Аналитика</span>
+            <a href="/logout/" class="header-link logout">Выйти в режим терминала</a>
         {% else %}
-            <p>Загрузка статистики...</p>
+            <span class="role-badge patient">● РЕЖИМ ТЕРМИНАЛА (Пациент)</span>
+            <a href="/login-admin/" class="header-link login">Войти как Администратор</a>
         {% endif %}
     </div>
+</header>
 
+{% if messages %}
+<div class="alert-container">
+    {% for message in messages %}     
+        <div class="alert-item 
+            {% if message.tags == 'error' %}error
+            {% elif message.tags == 'warning' %}warning
+            {% elif message.tags == 'success' %}success
+            {% else %}default{% endif %}">
+            {{ message|safe }}
+        </div>
+    {% endfor %}
 </div>
+{% endif %}
+
+
+{% if role == 'patient' %}
+<div class="main-card terminal">
+    <h2 class="terminal-title">📋 Терминал самозаписи пациента</h2>
+    <p class="terminal-desc">Пожалуйста, укажите ваши данные для прохождения экспресс-теста рисков</p>
+    <hr class="divider">
+      
+    {% if input_error %}
+        <div class="error-box">{{ input_error }}</div>
+    {% else %}
+        <form method="POST" action="">
+            {% csrf_token %}
+            <p>Ваше имя: <input type="text" name="name" class="input-fixed" required></p>
+            <p>Дата рождения: <input type="date" name="birthday" required></p>
+            <p>Пол: 
+                <select name="gender">
+                    <option value="M">Мужской</option>
+                    <option value="F">Женский</option>
+                </select>
+            </p>
+            <p>Город: <input type="text" name="city" class="input-fixed" required></p>
+                            
+            <div class="symptoms-container">
+                <p class="symptoms-title"><strong>Выберите имеющиеся у вас симптомы:</strong></p>
+                <div class="symptoms-grid">
+                    {% for disease in all_diseases %}
+                        <label class="disease-badge">
+                            <input type="checkbox" name="disease" value="{{ disease.id }}">
+                            {{ disease.disease }}
+                        </label>
+                    {% empty %}
+                        <span class="tech-error-text">⚠️ Ведутся технические работы. Справочник симптомов недоступен.</span>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <p><button type="submit" class="btn-submit-terminal">Проверить риск</button></p>
+        </form> 
+    {% endif %}
+</div>
+{% endif %}
+
+
+{% if role == 'admin' %}
+<div class="main-card dashboard">
+    <h2 class="dashboard-title">📊 Аналитическая панель STAT (АРМ Врача)</h2>
+    <p class="dashboard-desc">Мониторинг эпидемиологической обстановки в реальном времени</p>
+    <hr class="divider">
+
+    {% if stat_error %}
+        <div class="stat-microservice-error">
+            ⚠️ Ошибка соединения: Микросервис <code>stat</code> временно недоступен.
+            <br><span class="stat-error-sub">Транзакционная подсистема инфоматов при этом функционирует автономно.</span>
+        </div>
+    {% elif stats %}
+        <div class="stats-grid">
+            <div class="stat-card blue">
+                <span class="stat-label blue">Всего анкет в БД</span>
+                <h3 class="stat-value large-blue">{{ stats.total_patients }}</h3>
+            </div>
+            <div class="stat-card green">
+                <span class="stat-label green">Средний возраст</span>
+                <h3 class="stat-value large-green">{{ stats.average_age }} лет</h3>
+            </div>
+            <div class="stat-card gray">
+                <span class="stat-label gray">Гендерный срез</span>
+                <h3 class="stat-value medium-gray">М: {{ stats.gender_split.males }} | Ж: {{ stats.gender_split.females }}</h3>
+            </div>
+        </div>
+
+        <div class="columns-grid">
+            <div class="column-card">
+                <h4 class="column-title">📍 Топ городов по обращениям:</h4>
+                <ul class="info-list">
+                    {% if stats.top_cities %}
+                        {% for city, count in stats.top_cities %}
+                            <li><strong>{{ city }}</strong> — {{ count }} пац.</li>
+                        {% endfor %}
+                    {% else %}
+                        <li>Данных для анализа нет</li>
+                    {% endif %}
+                </ul>
+            </div>
+
+            <div class="column-card">
+                <h4 class="column-title">🔥 Топ выявляемых симптомов:</h4>
+                <ul class="info-list">
+                    {% if stats.top_diseases %}
+                        {% for disease, count in stats.top_diseases %}
+                            <li><strong>{{ disease }}</strong> — {{ count }} раз(а)</li>
+                        {% endfor %}
+                    {% else %}
+                        <li>Данных для анализа нет</li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    {% else %}
+        <p class="tech-error-text">Данные аналитики не могут быть построены.</p>
+    {% endif %}
+</div>
+{% endif %}
