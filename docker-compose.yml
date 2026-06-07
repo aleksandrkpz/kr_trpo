@@ -55,21 +55,21 @@ services:
 
   main:
     #build: ./service_main
-    image: aleksandrkpz/service_main:latest
+    image: aleksandrkpz/service_main:2.0
     volumes:
       - ./service_main:/app
     working_dir: /app
 
   input:
     #build: ./service_input
-    image: aleksandrkpz/service_input:latest
+    image: aleksandrkpz/service_input:2.0
     volumes:
       - ./service_input:/app
     working_dir: /app
 
   stat:
     #build: ./service_stat
-    image: aleksandrkpz/service_stat:latest
+    image: aleksandrkpz/service_stat:2.0
     volumes:
       - ./service_stat:/app
     working_dir: /app
