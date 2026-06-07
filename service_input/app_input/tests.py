@@ -42,5 +42,5 @@ class ApiInputTestCase(TestCase):
         # Проверяем, что человек реально создался в базе
         self.assertEqual(Human.objects.count(), 1)
         saved_human = Human.objects.first()
-        self.assertEqual(saved_human.name, 'Иван Тестовый')
+        self.assertEqual(saved_human.name, 'Тест')
         self.assertEqual(saved_human.disease.first().disease, 'Грипп')
