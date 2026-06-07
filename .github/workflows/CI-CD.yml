@@ -34,7 +34,7 @@ jobs:
   deploy:
     name: Deploy
     needs: run-tests # Деплой начнется только если тесты прошли успешно
-    runs-on: [self-hosted] # раннер на ВМ
+    runs-on: [self-hosted] # раннер  на ВМ
 
     steps:
       - name: Checkout code
@@ -46,7 +46,7 @@ jobs:
       - name: Waiting for DB
         run: sleep 15
 
-      - name: Apply migrations
+      - name: Apply
         run: |
           docker compose exec -T main python manage.py migrate
           docker compose exec -T input python manage.py migrate
