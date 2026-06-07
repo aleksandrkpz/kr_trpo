@@ -1,8 +1,9 @@
-[{"model": "app_input.disease", "pk": 1,"fields": {"disease": "Одышка"  }},
+[
+  {"model": "app_input.disease", "pk": 1,"fields": {"disease": "Одышка"  }},
   {"model": "app_input.disease","pk": 2,"fields": { "disease": "Боль в груди"} },
   {"model": "app_input.disease","pk": 3,"fields": {"disease": "Потеря сознания"}},
   {"model": "app_input.disease","pk": 4,"fields": {"disease": "Высокая температура"} },
-  { "model": "app_input.disease", "pk": 5,"fields": {"disease": "Острая боль" } },
+  {"model": "app_input.disease", "pk": 5,"fields": {"disease": "Острая боль" } },
   {"model": "app_input.disease","pk": 6,"fields": {"disease": "Сильный кашель"}},
   {"model": "app_input.disease", "pk": 7, "fields": {"disease": "Насморк"}},
   {"model": "app_input.disease", "pk":8, "fields":{"disease": "Чихание"}},

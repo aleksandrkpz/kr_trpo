@@ -1,0 +1,54 @@
+name: Medical App CI/CD Pipeline
+# триггеры активации сборки
+on:
+  push:
+    branches: [ main ] # Пайплайн запускается при любом пуше в ветку main
+  pull_request:
+    branches: [ main ] # и при попытке слияния в ветку main
+
+jobs:
+  # (CI)
+  run-tests:
+    name: Automated Unit Testing
+    runs-on: ubuntu-latest # CI будет на бесплатном раннере Гитхаба
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Docker compose up
+        run: docker compose up -d
+
+      - name: Waiting for DB
+        run: sleep 5
+      # запуск автотестов
+      - name: Running tests
+        run: ./test.sh
+
+      - name: Stopping tests
+        if: always() 
+        run: docker compose down
+
+  # 
+  # (CD)
+  # 
+  deploy:
+    name: Deploy
+    needs: run-tests # Деплой начнется только если тесты прошли успешно
+    runs-on: [self-hosted] # раннер на ВМ
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Docker Compose up
+        run: docker compose up --build -d
+
+      - name: Waiting for DB
+        run: sleep 5
+
+      - name: Checking containers
+        run: docker compose ps
+
+      - name: Nginx test
+        run: curl -s -o /dev/null -w "%{http_code}" http://localhost:80 | grep -E "200|302"
