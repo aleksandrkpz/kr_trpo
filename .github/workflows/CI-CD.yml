@@ -1,4 +1,4 @@
-name: Medical App CI/CD Pipeline
+name: CI/CD Pipeline
 # триггеры активации сборки
 on:
   push:
@@ -28,7 +28,6 @@ jobs:
       - name: Stopping tests
         if: always() 
         run: docker compose down
-
   # 
   # (CD)
   # 
@@ -50,5 +49,5 @@ jobs:
       - name: Checking containers
         run: docker compose ps
 
-      - name: Nginx test
-        run: curl -s -o /dev/null -w "%{http_code}" http://localhost:80 | grep -E "200|302"
+      - name: Nginx test # проверка загрузки страницы
+        run: curl -s -o /dev/null -w "%{http_code}" http://192.168.31.80:80 | grep -E "200|302"
