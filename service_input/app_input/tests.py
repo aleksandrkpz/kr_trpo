@@ -1,5 +1,5 @@
 import json
-from django.test import TestCase, Client
+from django.test import TestCase, Client # type: ignore
 from .models import Disease, Human
 
 class ApiInputTestCase(TestCase):
