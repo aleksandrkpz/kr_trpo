@@ -44,10 +44,10 @@ jobs:
         run: docker compose up --build -d
 
       - name: Waiting for DB
-        run: sleep 5
+        run: sleep 15
 
       - name: Checking containers
         run: docker compose ps
 
       - name: Nginx test # проверка загрузки страницы
-        run: curl -s -o /dev/null -w "%{http_code}" http://192.168.31.80:80 | grep -E "200|302"
+        run: curl -s -o /dev/null -w "%{http_code}" http://localhost:80 | grep -E "200|302"
