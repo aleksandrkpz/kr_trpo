@@ -46,6 +46,13 @@ jobs:
       - name: Waiting for DB
         run: sleep 15
 
+      - name: Apply migrations
+        run: |
+          docker compose exec -T main python manage.py migrate
+          docker compose exec -T input python manage.py migrate
+          docker compose exec -T stat python manage.py migrate
+
+
       - name: Checking containers
         run: docker compose ps
 
