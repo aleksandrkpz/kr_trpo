@@ -10,11 +10,17 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checking code
         uses: actions/checkout@v4
 
       - name: Build and run Docker Compose
         run: docker compose up --build -d
+        
+      - name: Wait for DB 
+        run: sleep 5   
+
+      - name: Run test.sh
+        run: ./test.sh
 
       - name: Check running containers
         run: docker compose ps 
