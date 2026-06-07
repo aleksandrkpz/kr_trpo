@@ -15,7 +15,7 @@ class Human (models.Model):
         ('M', 'Мужской'),
         ('F', 'Женский'),
     ]
-
+    city = models.CharField(max_length= 100, verbose_name= 'Город',default='Не указан')
     gender = models.CharField(max_length = 1, choices = LIST_GENDER, verbose_name = 'Пол')
     birthday = models.DateField(verbose_name = 'Дата рождения')
     disease = models.ManyToManyField(Disease, verbose_name = 'Заболевание')
