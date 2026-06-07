@@ -54,22 +54,22 @@ services:
       retries: 5
 
   main:
-    build: ./service_main
-    #image: aleksandrkpz/service_main:1.0
+    #build: ./service_main
+    image: aleksandrkpz/service_main:latest
     volumes:
       - ./service_main:/app
     working_dir: /app
 
   input:
-    build: ./service_input
-    #image: aleksandrkpz/service_input:1.0
+    #build: ./service_input
+    image: aleksandrkpz/service_input:latest
     volumes:
       - ./service_input:/app
     working_dir: /app
 
   stat:
-    build: ./service_stat
-    #image: aleksandrkpz/service_stat:1.0
+    #build: ./service_stat
+    image: aleksandrkpz/service_stat:latest
     volumes:
       - ./service_stat:/app
     working_dir: /app
