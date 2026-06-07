@@ -4,24 +4,23 @@ from django.contrib import messages
 from datetime import datetime, date
 from django.shortcuts import redirect
 
+# Записываем в сессию роль админа
 def login_as_admin(request):
-    # Записываем в сессию (куки) роль админа
     request.session['user_role'] = 'admin'
     return redirect('dashboard_page')  # редирект обратно на главную
 
+# Сбрасываем роль на обычного пациента
 def logout_user(request):
-    # Сбрасываем роль на обычного пациента
     request.session['user_role'] = 'patient'
     return redirect('dashboard_page')
 
-#функция в сервисе Main которая открывается по адресу / (из URLS)
-# context - словарь, в который складываются данные для html шаблона  {% stats %}например 
+#функция index, открывается по адресу "/"
 def dashboard_page(request):
-    # 1. СОЗДАЕМ ПЕРЕМЕННУЮ СРАЗУ (на самом верху функции!)
+
     role = request.session.get('user_role', 'patient')
     all_diseases = [] 
     
-    # 2. Пытаемся скачать симптомы из API сервиса input
+    #  Пытаемся скачать симптомы из API сервиса input
     if role == 'patient':
         try:
             res_diseases = requests.get('http://input:8000/input/api/diseases/', timeout=2)
@@ -31,7 +30,7 @@ def dashboard_page(request):
         except requests.exceptions.RequestException:
             pass
 
-    # 3. Собираем контекст и передаем туда нашу рабочую переменную
+    # Собираем словарь и передаем туда нашу рабочую переменную
     context = {
         'role':role,
         'all_diseases': all_diseases,
@@ -39,10 +38,8 @@ def dashboard_page(request):
         'input_error': None,
         'stat_error': None,
     }
-    
-    
 
-    # 4. ОБРАБОТКА НАЖАТИЯ КНОПКИ 
+    #Обработка нажатия кнопки + проверки валидности
     if request.method == 'POST':
         selected_name = request.POST.get('name')
         birthday_str = request.POST.get('birthday', '')
@@ -60,14 +57,14 @@ def dashboard_page(request):
         
         if birthday_str:
             try:
-                # Превращаем строку "YYYY-MM-DD" в реальный объект даты Python
+                # Превращаем строку "YYYY-MM-DD" в объект даты Python
                 birthday_date = datetime.strptime(birthday_str, '%Y-%m-%d').date()
-                # Проверяем, не в будущем ли дата (сейчас у нас 2026 год)
+                # Проверяем, не в будущем ли дата 
                 if birthday_date > date.today():
                     messages.error(request, "Ошибка: Дата рождения не может быть в будущем")
                     return render(request, 'app_main/dashboard.html', context)
                 
-                # Дополнительно: защита от слишком старых дат (например, старше 120 лет)
+                # защита от дат старше 120 лет
                 if birthday_date.year < (date.today().year - 120):
                     messages.error(request, "Пожалуйста, укажите корректный год рождения.")
                     return render(request, 'app_main/dashboard.html', context)
@@ -76,7 +73,7 @@ def dashboard_page(request):
                 messages.error(request, "Ошибка: Неверный формат даты.")
                 return render(request, 'app_main/dashboard.html', context)   
 
-        
+        #собираем словарь валидированных данных
         payload = {
             'name': selected_name,
             'birthday': request.POST.get('birthday'),
@@ -85,7 +82,7 @@ def dashboard_page(request):
             'disease': selected_diseases         
         }
 
-        #
+        # перебираем выбранные пользователем болезни
         chosen_symptom_names = [
             d['disease'] for d in all_diseases if str(d['id']) in selected_diseases
         ]
@@ -118,7 +115,7 @@ def dashboard_page(request):
                 request, 
                 f"Низкий риск. {selected_name}, симптомы не угрожают жизни. "
                 f"Соблюдайте домашний режим, пейте больше жидкости. При ухудшении обратитесь в клинику."
-                f" '<a href='https://www.gosuslugi.ru/help/faq/doctor/17' target='_blank'> Как записаться на Госуслугах? </a>"
+                f" '<a href='https://www.gosuslugi.ru/help/faq/doctor/17' target='_blank'> Узнайте как записаться на Госуслугах </a>"
             )
 
         # Отправляем данные в базу
@@ -132,7 +129,7 @@ def dashboard_page(request):
         except requests.exceptions.RequestException:
             context['input_error'] = "input_error"
 
-    # 5. ПОЛУЧЕНИЕ СТАТИСТИКИ (Для правой плашки)
+    # ПОЛУЧЕНИЕ СТАТИСТИКИ 
     elif role == 'admin':
         try:
             res_stats = requests.get('http://stat:8000/stat/api/get_stats/', timeout=2)

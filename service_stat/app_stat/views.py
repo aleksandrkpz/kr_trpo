@@ -31,7 +31,7 @@ def get_analytics(request):
             cities.append(h.get('city', 'Не указан'))
         avg_age = sum(ages) // len(ages) if ages else 0
         
-        # Получаем все болезни в словарь и сортируем при помощи лямбда-функции
+        # Помещаем все болезни в словарь и сортируем при помощи лямбда-функции
         disease_counts = {}
         for d in all_diseases:
             disease_counts[d] = disease_counts.get(d, 0) + 1
@@ -43,7 +43,7 @@ def get_analytics(request):
             city_counts[c] = city_counts.get(c, 0) + 1
         top_cities = sorted(city_counts.items(), key=lambda x: x[1], reverse=True)[:3]
         
-        # Результат упаковываем в формат JSON
+        # Результат упаковываем в JSON
         analytics_result = {
             'status': 'success',
             'stats': {

@@ -9,7 +9,7 @@ services:
     depends_on:
       - main
       - input
-      - stat
+      - stat 
 
   main_db:
     image: postgres:15-alpine
@@ -55,21 +55,21 @@ services:
 
   main:
     build: ./service_main
-    #image
+    #image: aleksandrkpz/service_main:1.0
     volumes:
       - ./service_main:/app
     working_dir: /app
 
   input:
     build: ./service_input
-    #image
+    #image: aleksandrkpz/service_input:1.0
     volumes:
       - ./service_input:/app
     working_dir: /app
 
   stat:
     build: ./service_stat
-    #image
+    #image: aleksandrkpz/service_stat:1.0
     volumes:
       - ./service_stat:/app
     working_dir: /app

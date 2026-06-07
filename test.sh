@@ -1,5 +1,5 @@
-#!bin/bash
-docker compose exec input python manage.py test && \
-docker compose exec stat python manage.py test && \
-docker compose exec main python manage.py test
+#!/bin/bash
+docker compose exec -T input python manage.py test && \
+docker compose exec - T stat python manage.py test && \
+docker compose exec -T main python manage.py test
 

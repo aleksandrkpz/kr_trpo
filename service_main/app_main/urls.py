@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views  # импортируем твои вьюхи из views.py
+from . import views
 
 urlpatterns = [
     # Главная страница (инфомат или ПК врача в зависимости от сессии)

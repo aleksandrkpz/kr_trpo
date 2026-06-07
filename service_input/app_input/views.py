@@ -17,7 +17,7 @@ def api_get_diseases(request):
 def api_create_human(request):
     if request.method == 'POST':
         data = json.loads(request.body) # Берем JSON из сервиса MAIN 
-        #request.body выдает сырой поток байт, json.loads превращает его в словарь
+        #парсим его 
         name = data.get('name')
         birthday = data.get('birthday')
         gender = data.get('gender')
