@@ -10,7 +10,7 @@ jobs:
   # (CI)
   run-tests:
     name: Automated Unit Testing
-    runs-on: ubuntu-latest # CI будет на бесплатном раннере Гитхаба
+    runs-on: [self-hosted] 
 
     steps:
       - name: Checkout
