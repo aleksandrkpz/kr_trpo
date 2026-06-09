@@ -6,9 +6,9 @@
 3. Выполнить команду docker compose up -d
 4. Дождаться завершения запуска контейнеров
 5. Выполнить миграции:
-docker compose exec -T main python manage.py migrate
-docker compose exec -T input python manage.py migrate
-docker compose exec -T stat python manage.py migrate
+docker compose exec -T main python manage.py migrate &&
+docker compose exec -T input python manage.py migrate &&
+docker compose exec -T stat python manage.py migrate 
 
 6. Откройте браузер:
 
