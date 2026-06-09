@@ -1,4 +1,5 @@
 Инструкция по запуску приложения
+
 0. Войти под root или добавить пользователя в группу Docker
 1. Склонировать репозиторий на ОС Debian или Ubuntu с установленным Docker и Docker Compose git clone https://github.com/aleksandrkpz/kr_trpo
 2. Перейти в папку kr_trpo
